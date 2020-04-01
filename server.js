@@ -10,7 +10,11 @@ app.use(bodyParser.json());
 
 app.use(cors());
 
-app.use('/api/iota',iota);
+app.use('/api/iota', iota);
+
+app.get('/', (req, res) => {
+    res.json({ msg: 'hoho' });
+});
 
 app.listen(port, () => {
     console.log(`server started on port ${port}`)

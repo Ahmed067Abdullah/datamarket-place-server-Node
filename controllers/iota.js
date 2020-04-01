@@ -2,10 +2,6 @@ const { composeAPI } = require('@iota/core');
 const { validateBundleSignatures } = require("@iota/bundle-validator");
 const { asTransactionObject } = require('@iota/transaction-converter');
 const axios = require('axios');
-// const {
-//   getSettings,
-//   setPurchase,
-// } = require('./firebase');
 const config = require('../config');
 
 const get = (req, res) => {
