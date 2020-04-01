@@ -9,8 +9,6 @@ const get = (req, res) => {
 };
 
 const purchaseStream = async (req, res) => {
-  // 1200000 ms === 20 mins
-  req.setTimeout(1200000);
   // Check Fields
   const packet = req.body;
   if (!packet || !packet.userId || !packet.deviceId || !packet.seed) {
