@@ -5,9 +5,13 @@ const DelayedResponse = require('http-delayed-response');
 const router = express.Router();
 
 router.use(function (req, res) {
-    var delayed = new DelayedResponse(req, res);
-    iotaController.purchaseStream(delayed.wait());
+
     console.log('here');
+    var delayed = new DelayedResponse(req, res);
+    delayed.wait();
+    var promise = iotaController.purchaseStream();
+    // will eventually end when the promise is fulfilled
+    delayed.end(promise);
 });
 
 router.get("/", iotaController.get);
