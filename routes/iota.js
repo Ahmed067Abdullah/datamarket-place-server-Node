@@ -6,7 +6,10 @@ const router = express.Router();
 
 router.use(function (req, res) {
     var delayed = new DelayedResponse(req, res);
-    iotaController.purchaseStream(delayed.start());
+
+    var promise = iotaController.purchaseStream();
+    // will eventually end when the promise is fulfilled
+    delayed.end(promise);
 });
 
 router.get("/", iotaController.get);
