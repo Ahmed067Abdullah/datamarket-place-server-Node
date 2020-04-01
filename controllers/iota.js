@@ -9,6 +9,8 @@ const get = (req, res) => {
 };
 
 const purchaseStream = async (req, res) => {
+  // 1200000 ms === 20 mins
+  req.setTimeout(1200000);
   // Check Fields
   const packet = req.body;
   if (!packet || !packet.userId || !packet.deviceId || !packet.seed) {
@@ -21,6 +23,9 @@ const purchaseStream = async (req, res) => {
     const device = (await axios.get(`${firebaseEndPoint}/device?deviceId=${packet.deviceId}`)).data;
     let price = defaultPrice;
     if (device) {
+      if ((device.buyers || []).includes(packet.userId)) {
+        return res.status(403).json({ error: "Device already bought" });
+      }
       if (device.price) {
         price = Number(device.price);
       } else if (device.value) {
