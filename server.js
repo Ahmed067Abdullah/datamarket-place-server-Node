@@ -13,7 +13,7 @@ app.use(cors());
 app.use('/api/iota', iota);
 
 app.get('/', (req, res) => {
-    res.json({ msg: 'hoho' });
+    res.json({ msg: 'Hello from root' });
 });
 
 app.listen(port, () => {
