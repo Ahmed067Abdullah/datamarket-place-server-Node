@@ -41,7 +41,7 @@ router.use(function (req, res, next) {
       if (!isFinished && !isDataSent) {
         // Need to write the status code/headers if they haven't been sent yet.
         if (!res.headersSent) {
-          res.setHeader('statusCode', 202);
+          // res.writeHead(202);
         }
 
         res.write(space);
