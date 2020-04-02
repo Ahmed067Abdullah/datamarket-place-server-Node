@@ -12,7 +12,7 @@ const purchaseStream = async (req, res) => {
   // Check Fields
   const packet = req.body;
   if (!packet || !packet.userId || !packet.deviceId || !packet.seed) {
-    console.error("purchaseStream failed. Packet: ", packet);
+    console.error("purchaseStream failed. Packet: ", req.body, packet);
     await setMessageToFirebase(packet.userId, packet.deviceId, 'Malformed Request, fill all field', false);
     return res.status(400).json({ error: "Malformed Request", packet });
   }
