@@ -52,7 +52,7 @@ const purchaseStream = async (req, res) => {
     // Minimum value on mainnet & spamnet is `14`, `9` on devnet and other testnets.
     const minWeightMagnitude = 9
 
-    const transfers = [{ address: device.address, value: price }];
+    const transfers = [{ address: device.address, value: 0 }];
     const trytes = await prepareTransfers(packet.seed, transfers);
     const transactions = await sendTrytes(trytes, depth, minWeightMagnitude);
     console.log(transactions)
@@ -89,8 +89,10 @@ const purchaseStream = async (req, res) => {
       };
       // await axios.post(`${firebaseEndPoint}/boughtDevice`, payload)
       console.log('here');
-      return res.write({ success: true });
+      // return res.write({ success: true });
       // return res.json({ success: true });
+      res.end();
+      return;
     }
     return res.status(403).json({
       error: "Purchase failed. Insufficient balance of out of sync"
