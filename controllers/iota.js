@@ -87,9 +87,10 @@ const purchaseStream = async (req, res) => {
         deviceId: packet.deviceId,
         secretKey
       };
-      await axios.post(`${firebaseEndPoint}/boughtDevice`, payload)
+      // await axios.post(`${firebaseEndPoint}/boughtDevice`, payload)
       console.log('here');
-      return res.json({ success: true });
+      return res.write({ success: true });
+      // return res.json({ success: true });
     }
     return res.status(403).json({
       error: "Purchase failed. Insufficient balance of out of sync"
