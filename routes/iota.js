@@ -7,5 +7,4 @@ router.get("/", iotaController.get);
 
 router.post("/purchaseStream", iotaController.purchaseStream);
 
-
 module.exports = router;

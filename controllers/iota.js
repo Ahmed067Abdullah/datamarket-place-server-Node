@@ -8,22 +8,29 @@ const get = (req, res) => {
   res.send({ msg: 'Hello World' });
 };
 
+
+// To change for production
+// 1) uncomment code to update firebase collections (Line # 101)
+// 2) uncomment code to check for availability of balance (Line # 49 - 55)
+// 3) put actual value of device in the array of config instead of current hardcoded 0 (Line # 66)
 const purchaseStream = async (req, res) => {
-  // 1200000 ms === 20 mins
-  req.setTimeout(1200000);
-  // Check Fields
+  console.log('POST::purchaseStream');
+
   const packet = req.body;
   if (!packet || !packet.userId || !packet.deviceId || !packet.seed) {
-    console.error("purchaseStream failed. Packet: ", packet);
+    console.error("purchaseStream failed. Packet: ", req.body, packet);
+    await setMessageToFirebase(packet.userId, packet.deviceId, 'Malformed Request, fill all field', false);
     return res.status(400).json({ error: "Malformed Request", packet });
   }
 
+  const { deviceId, userId, seed } = packet
   try {
     const { firebaseEndPoint, provider, iotaApiVersion, defaultPrice, secretKey } = config;
-    const device = (await axios.get(`${firebaseEndPoint}/device?deviceId=${packet.deviceId}`)).data;
+    const device = (await axios.get(`${firebaseEndPoint}/device?deviceId=${deviceId}`)).data;
     let price = defaultPrice;
     if (device) {
-      if ((device.buyers || []).includes(packet.userId)) {
+      if ((device.buyers || []).includes(userId)) {
+        await setMessageToFirebase(userId, deviceId, 'Device already bought', false);
         return res.status(403).json({ error: "Device already bought" });
       }
       if (device.price) {
@@ -32,6 +39,7 @@ const purchaseStream = async (req, res) => {
         price = Number(device.value);
       }
     } else {
+      await setMessageToFirebase(userId, deviceId, `Device doesn't exist`, false);
       return res.status(404).json({ error: `Device doesn't exist` });
     }
 
@@ -42,6 +50,7 @@ const purchaseStream = async (req, res) => {
     // const { balances } = await getBalances(allAddresses, 10);
     // const totalBalance = balances.reduce((el, sum) => sum + el, 0);
     // if (price > totalBalance) {
+    //   await setMessageToFirebase(userId, deviceId, `Insufficient balanc, ${totalBalance}`, false);
     //   return res.status(404).json({ error: `Insufficient balanc, ${totalBalance}` });
     // }
 
@@ -54,10 +63,9 @@ const purchaseStream = async (req, res) => {
     // Minimum value on mainnet & spamnet is `14`, `9` on devnet and other testnets.
     const minWeightMagnitude = 9
 
-    const transfers = [{ address: device.address, value: price }];
-    const trytes = await prepareTransfers(packet.seed, transfers);
+    const transfers = [{ address: device.address, value: 0 }];
+    const trytes = await prepareTransfers(seed, transfers);
     const transactions = await sendTrytes(trytes, depth, minWeightMagnitude);
-    console.log(transactions)
     const hashes = transactions.map(transaction => transaction.hash);
 
     let retries = 0;
@@ -81,23 +89,42 @@ const purchaseStream = async (req, res) => {
           "purchaseStream failed. Transaction is invalid for: ",
           bundle
         );
-        res.status(403).json({ error: "Transaction is Invalid" });
+        await setMessageToFirebase(userId, deviceId, "Transaction is Invalid", false);
+        return res.status(403).json({ error: "Transaction is Invalid" });
       }
 
       const payload = {
-        userId: packet.userId,
-        deviceId: packet.deviceId,
+        userId,
+        deviceId,
         secretKey
       };
-      await axios.post(`${firebaseEndPoint}/boughtDevice`, payload)
+      // await axios.post(`${firebaseEndPoint}/boughtDevice`, payload)
+      console.log('DONE');
+      await setMessageToFirebase(userId, deviceId, "Device bought successfully", true);
       return res.json({ success: true });
     }
-    return res.json({
+    await setMessageToFirebase(userId, deviceId, "Purchase failed. Insufficient balance of out of sync", false);
+    return res.status(403).json({
       error: "Purchase failed. Insufficient balance of out of sync"
     });
+
   } catch (e) {
     console.error("purchaseData failed. Error: ", e);
+    await setMessageToFirebase(userId, deviceId, e.message, false);
     return res.status(403).json({ error: e.message });
+  }
+}
+
+const setMessageToFirebase = async (userId, deviceId, message, success) => {
+  const { firebaseEndPoint } = config;
+  const payload = {
+    userId, deviceId, message, success
+  };
+  try {
+    await axios.post(`${firebaseEndPoint}/setMessage`, payload);
+  }
+  catch (e) {
+    console.log(e.message);
   }
 }
 
