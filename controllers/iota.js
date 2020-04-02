@@ -91,7 +91,7 @@ const purchaseStream = async (req, res) => {
       console.log('here');
       return res.json({ success: true });
     }
-    return res.json({
+    return res.status(403).json({
       error: "Purchase failed. Insufficient balance of out of sync"
     });
   } catch (e) {

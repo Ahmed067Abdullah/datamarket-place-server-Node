@@ -30,6 +30,7 @@ router.use(function (req, res, next) {
   res.on('data', (data) => {
     // Look for something other than our blank space to indicate that real
     // data is now being sent back to the client.
+    console.log(data);
     if (data !== space) {
       isDataSent = true;
     }
@@ -41,7 +42,7 @@ router.use(function (req, res, next) {
       if (!isFinished && !isDataSent) {
         // Need to write the status code/headers if they haven't been sent yet.
         if (!res.headersSent) {
-          // res.writeHead(202);
+          res.writeHead(202);
         }
 
         res.write(space);
