@@ -88,6 +88,7 @@ const purchaseStream = async (req, res) => {
         secretKey
       };
       await axios.post(`${firebaseEndPoint}/boughtDevice`, payload)
+      console.log('here');
       return res.json({ success: true });
     }
     return res.json({
