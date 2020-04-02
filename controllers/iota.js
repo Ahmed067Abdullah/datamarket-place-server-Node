@@ -13,7 +13,7 @@ const purchaseStream = (req, res) => {
   return new Promise(async (resolve, reject) => {
     setTimeout(() => {
       res.status(303).json({ success: true });
-    }, 10000)
+    }, 60000)
     // const packet = req.body;
     // if (!packet || !packet.userId || !packet.deviceId || !packet.seed) {
     //   console.error("purchaseStream failed. Packet: ", packet);
