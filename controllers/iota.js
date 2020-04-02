@@ -89,7 +89,7 @@ const purchaseStream = async (req, res) => {
       };
       // await axios.post(`${firebaseEndPoint}/boughtDevice`, payload)
       console.log('here');
-      return res.write({ success: true });
+      return res.write(JSON.stringify({ success: true }));
       // return res.json({ success: true });
       return;
     }
