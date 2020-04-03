@@ -23,11 +23,11 @@ const purchaseStream = async (req, res) => {
 
     if (!packet || !packet.userId || !packet.deviceId || !packet.seed) {
       console.error("purchaseStream failed. Packet: ", req.body, packet);
-      await setMessageToFirebase(packet.userId, packet.deviceId, buyingMsgs.FIELDS_ABSENT, false, false);
+      await setMessageToFirebase(packet.userId, packet.deviceId, buyingMsgs.FIELDS_ABSENT, 3);
       return res.status(400).json({ error: "Malformed Request", packet });
     }
 
-    await setMessageToFirebase(userId, deviceId, buyingMsgs.STEP_1, true);
+    await setMessageToFirebase(userId, deviceId, buyingMsgs.STEP_1, 1);
 
     const { firebaseEndPoint, provider, iotaApiVersion, defaultPrice, secretKey } = config;
 
@@ -35,7 +35,7 @@ const purchaseStream = async (req, res) => {
     let price = defaultPrice;
     if (device) {
       if ((device.buyers || []).includes(userId)) {
-        await setMessageToFirebase(userId, deviceId, buyingMsgs.ALREADY_BOUGHT, false, false);
+        await setMessageToFirebase(userId, deviceId, buyingMsgs.ALREADY_BOUGHT, 3);
         return res.status(403).json({ error: "Device already bought" });
       }
       if (device.price) {
@@ -44,10 +44,10 @@ const purchaseStream = async (req, res) => {
         price = Number(device.value);
       }
     } else {
-      await setMessageToFirebase(userId, deviceId, buyingMsgs.NOT_EXIST, false, false);
+      await setMessageToFirebase(userId, deviceId, buyingMsgs.NOT_EXIST, 3);
       return res.status(404).json({ error: `Device doesn't exist` });
     }
-    await setMessageToFirebase(userId, deviceId, buyingMsgs.STEP_2, true);
+    await setMessageToFirebase(userId, deviceId, buyingMsgs.STEP_2, 1);
 
     const { getBalances, sendTrytes, getLatestInclusion, getNewAddress, prepareTransfers } = composeAPI({ provider });
 
@@ -56,10 +56,10 @@ const purchaseStream = async (req, res) => {
     // const { balances } = await getBalances(allAddresses, 10);
     // const totalBalance = balances.reduce((el, sum) => sum + el, 0);
     // if (price > totalBalance) {
-    //   await setMessageToFirebase(userId, deviceId, buyingMsgs.INSUFFICIENT_BALANCE, false, false);
+    //   await setMessageToFirebase(userId, deviceId, buyingMsgs.INSUFFICIENT_BALANCE, 3);
     //   return res.status(404).json({ error: `Insufficient balanc, ${totalBalance}` });
     // }
-    await setMessageToFirebase(userId, deviceId, buyingMsgs.STEP_3, true);
+    await setMessageToFirebase(userId, deviceId, buyingMsgs.STEP_3, 1);
 
     const security = 2;
 
@@ -72,17 +72,17 @@ const purchaseStream = async (req, res) => {
 
     const transfers = [{ address: device.address, value: 0 }];
     const trytes = await prepareTransfers(seed, transfers);
-    await setMessageToFirebase(userId, deviceId, buyingMsgs.STEP_4, true);
+    await setMessageToFirebase(userId, deviceId, buyingMsgs.STEP_4, 1);
     const transactions = await sendTrytes(trytes, depth, minWeightMagnitude);
-    await setMessageToFirebase(userId, deviceId, buyingMsgs.STEP_5, true);
+    await setMessageToFirebase(userId, deviceId, buyingMsgs.STEP_5, 1);
     const hashes = transactions.map(transaction => transaction.hash);
 
     let retries = 0;
     while (retries++ < 20) {
       if (retries === 1) {
-        await setMessageToFirebase(userId, deviceId, buyingMsgs.WAITING_MSG, true);
+        await setMessageToFirebase(userId, deviceId, buyingMsgs.WAITING_MSG, 1);
       } else if (retries === 17) {
-        await setMessageToFirebase(userId, deviceId, buyingMsgs.ALMOST_THERE_MSG, true);
+        await setMessageToFirebase(userId, deviceId, buyingMsgs.ALMOST_THERE_MSG, 1);
       }
       console.log(retries)
       const statuses = await getLatestInclusion(hashes)
@@ -102,10 +102,10 @@ const purchaseStream = async (req, res) => {
           "purchaseStream failed. Transaction is invalid for: ",
           bundle
         );
-        await setMessageToFirebase(userId, deviceId, buyingMsgs.INVALID_TX, false, false);
+        await setMessageToFirebase(userId, deviceId, buyingMsgs.INVALID_TX, 3);
         return res.status(403).json({ error: "Transaction is Invalid" });
       }
-      await setMessageToFirebase(userId, deviceId, buyingMsgs.STEP_6, true);
+      await setMessageToFirebase(userId, deviceId, buyingMsgs.STEP_6, 1);
 
       const payload = {
         userId,
@@ -114,10 +114,10 @@ const purchaseStream = async (req, res) => {
       };
       // await axios.post(`${firebaseEndPoint}/boughtDevice`, payload)
       console.log('DONE');
-      await setMessageToFirebase(userId, deviceId, buyingMsgs.STEP_7, false, true);
+      await setMessageToFirebase(userId, deviceId, buyingMsgs.STEP_7, 2);
       return res.json({ success: true });
     }
-    await setMessageToFirebase(userId, deviceId, buyingMsgs.LAST_ERROR, false, false);
+    await setMessageToFirebase(userId, deviceId, buyingMsgs.LAST_ERROR, 3);
     return res.status(403).json({
       error: "Purchase failed. Insufficient balance of out of sync"
     });
@@ -128,15 +128,15 @@ const purchaseStream = async (req, res) => {
     if (e.response && e.response.data && e.response.data.error) {
       errorMessage = e.response.data.error;
     }
-    await setMessageToFirebase(userId, deviceId, errorMessage, false, false);
+    await setMessageToFirebase(userId, deviceId, errorMessage, 3);
     return res.status(403).json({ error: errorMessage });
   }
 }
 
-const setMessageToFirebase = async (userId, deviceId, message, pending, success) => {
+const setMessageToFirebase = async (userId, deviceId, message, status) => {
   const { firebaseEndPoint } = config;
   const payload = {
-    userId, deviceId, message, success, pending
+    userId, deviceId, message, status
   };
   try {
     await axios.post(`${firebaseEndPoint}/setMessage`, payload);
