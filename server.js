@@ -16,6 +16,9 @@ app.get('/', (req, res) => {
     res.json({ msg: 'Hello from root' });
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
     console.log(`server started on port ${port}`)
 });
+
+// 1200000 ms === 20 mins
+server.setTimeout(1200000);
