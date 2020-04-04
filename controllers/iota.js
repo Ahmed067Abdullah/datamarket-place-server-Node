@@ -3,7 +3,7 @@ const { validateBundleSignatures } = require("@iota/bundle-validator");
 const { asTransactionObject } = require('@iota/transaction-converter');
 const axios = require('axios');
 const config = require('../config');
-const buyingMsgs = require('../utils/buyingStepsMessages');
+const getMessages = require('../utils/buyingStepsMessages');
 
 const get = (req, res) => {
   res.send({ msg: 'Hello World' });
@@ -17,9 +17,9 @@ const get = (req, res) => {
 const purchaseStream = async (req, res) => {
   console.log('POST::purchaseStream');
   const packet = req.body;
-  const { deviceId, userId, seed } = packet
+  const { deviceId, userId, seed, healthData } = packet
   try {
-
+    const buyingMsgs = getMessages(healthData ? 'Health Profile' : 'Device');
     if (!packet || !packet.userId || !packet.deviceId || !packet.seed) {
       console.error("purchaseStream failed. Packet: ", req.body, packet);
       await setMessageToFirebase(packet.userId, packet.deviceId, buyingMsgs.FIELDS_ABSENT, 3);
