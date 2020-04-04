@@ -31,7 +31,7 @@ const purchaseStream = async (req, res) => {
     const alreadyBuyingDevice = (await axios.post(`${firebaseEndPoint}/isCurrentlyBuyingAny`, { userId })).data;
     console.log(alreadyBuyingDevice)
     if (alreadyBuyingDevice.data) {
-      return res.json({ error: "You already have a purchase in progress. Please wait until it's completed" });
+      return res.json({ errorMsg: "You already have a purchase in progress. Please wait until it's completed" });
     }
 
     await setMessageToFirebase(userId, deviceId, buyingMsgs.STEP_1, 1);
@@ -148,7 +148,7 @@ const setMessageToFirebase = async (userId, deviceId, message, status) => {
     if (status === 2 || status === 3) {
       setTimeout(() => {
         deleteMessageFromFirebase(userId, deviceId);
-      }, 2000);
+      }, 5000);
     }
   }
   catch (e) {
