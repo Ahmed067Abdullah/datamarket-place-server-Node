@@ -19,7 +19,6 @@ const purchaseStream = async (req, res) => {
   const packet = req.body;
   const { deviceId, userId, seed } = packet
   try {
-    await deleteMessageFromFirebase(packet.userId, packet.deviceId);
 
     if (!packet || !packet.userId || !packet.deviceId || !packet.seed) {
       console.error("purchaseStream failed. Packet: ", req.body, packet);
@@ -27,9 +26,15 @@ const purchaseStream = async (req, res) => {
       return res.status(400).json({ error: "Malformed Request", packet });
     }
 
-    await setMessageToFirebase(userId, deviceId, buyingMsgs.STEP_1, 1);
-
     const { firebaseEndPoint, provider, iotaApiVersion, defaultPrice, secretKey } = config;
+
+    const alreadyBuyingDevice = (await axios.post(`${firebaseEndPoint}/isCurrentlyBuyingAny`, { userId })).data;
+    console.log(alreadyBuyingDevice)
+    if (alreadyBuyingDevice.data) {
+      return res.json({ error: "You already have a purchase in progress. Please wait until it's completed" });
+    }
+
+    await setMessageToFirebase(userId, deviceId, buyingMsgs.STEP_1, 1);
 
     const device = (await axios.get(`${firebaseEndPoint}/device?deviceId=${deviceId}`)).data;
     let price = defaultPrice;
@@ -140,6 +145,11 @@ const setMessageToFirebase = async (userId, deviceId, message, status) => {
   };
   try {
     await axios.post(`${firebaseEndPoint}/setMessage`, payload);
+    if (status === 2 || status === 3) {
+      setTimeout(() => {
+        deleteMessageFromFirebase(userId, deviceId);
+      }, 2000);
+    }
   }
   catch (e) {
     console.log(e.message);
