@@ -69,11 +69,11 @@ const purchaseStream = async (req, res) => {
     const security = 2;
 
     // Depth or how far to go for tip selection entry point
-    const depth = 5
+    const depth = 3
 
     // Difficulty of Proof-of-Work required to attach transaction to tangle.
     // Minimum value on mainnet & spamnet is `14`, `9` on devnet and other testnets.
-    const minWeightMagnitude = 9
+    const minWeightMagnitude = 10
 
     const transfers = [{ address: device.address, value: 0 }];
     const trytes = await prepareTransfers(seed, transfers);
