@@ -75,7 +75,7 @@ const purchaseStream = async (req, res) => {
     // Minimum value on mainnet & spamnet is `14`, `9` on devnet and other testnets.
     const minWeightMagnitude = 10
 
-    const transfers = [{ address: device.address, value: 0 }];
+    const transfers = [{ address: device.address, value: price }];
     const trytes = await prepareTransfers(seed, transfers);
     await setMessageToFirebase(userId, deviceId, buyingMsgs.STEP_4, 1);
     const transactions = await sendTrytes(trytes, depth, minWeightMagnitude);
@@ -89,8 +89,8 @@ const purchaseStream = async (req, res) => {
       } else if (retries === 17) {
         await setMessageToFirebase(userId, deviceId, buyingMsgs.ALMOST_THERE_MSG, 1);
       }
-      console.log(retries)
       const statuses = await getLatestInclusion(hashes)
+      console.log(retries, statuses);
       if (statuses.filter(status => status).length === 4) break;
       await new Promise(resolved => setTimeout(resolved, 10000));
     }
