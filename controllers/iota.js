@@ -12,8 +12,8 @@ const get = (req, res) => {
 
 // To change for production
 // 1) uncomment code to check for availability of balance (Line # 51 - 57)
-// 2) put actual value of device in the array of config instead of current hardcoded 0 (Line # 69)
-// 3) uncomment code to update firebase collections (Line # 109)
+// 2) put actual value of device in the array of config instead of current hardcoded 0 (Line # 77)
+// 3) uncomment code to update firebase collections (Line # 121)
 const purchaseStream = async (req, res) => {
   console.log('POST::purchaseStream');
   const packet = req.body;
@@ -74,7 +74,6 @@ const purchaseStream = async (req, res) => {
     // Difficulty of Proof-of-Work required to attach transaction to tangle.
     // Minimum value on mainnet & spamnet is `14`, `9` on devnet and other testnets.
     const minWeightMagnitude = 10
-
     const transfers = [{ address: device.address, value: price }];
     const trytes = await prepareTransfers(seed, transfers);
     await setMessageToFirebase(userId, deviceId, buyingMsgs.STEP_4, 1);
@@ -117,7 +116,10 @@ const purchaseStream = async (req, res) => {
         deviceId,
         secretKey
       };
-      // await axios.post(`${firebaseEndPoint}/boughtDevice`, payload)
+
+      // Update access on firebase, open for production, commented for development
+      await axios.post(`${firebaseEndPoint}/boughtDevice`, payload)
+
       console.log('DONE');
       await setMessageToFirebase(userId, deviceId, buyingMsgs.STEP_7, 2);
       return res.json({ success: true });
